@@ -1710,6 +1710,6 @@ ul.icons,
 }
 
 /* Optionally hide the after pseudo-element of the background */
-#bg:after {
+/* #bg:after {
 	display: none;
-}
+} */
