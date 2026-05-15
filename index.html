@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RMaDSD-Balu // Command Interface</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/loading.css">
+</head>
+<body>
+    <!-- Boot / Loading Screen -->
+    <div id="boot-screen">
+        <div class="boot-scanlines"></div>
+        <div class="boot-content">
+            <div class="boot-logo">
+                <svg class="boot-logo-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                    <circle class="boot-ring boot-ring-3" cx="60" cy="60" r="54" stroke-width="1" stroke-dasharray="8 6"/>
+                    <circle class="boot-ring boot-ring-2" cx="60" cy="60" r="42" stroke-width="1.5" stroke-dasharray="12 4"/>
+                    <circle class="boot-ring boot-ring-1" cx="60" cy="60" r="30" stroke-width="2" stroke-dasharray="20 6"/>
+                    <polygon class="boot-hex" points="60,44 73,51.5 73,68.5 60,76 47,68.5 47,51.5" stroke-width="1.5"/>
+                    <line class="boot-spoke" x1="60" y1="30" x2="60" y2="44" stroke-width="1"/>
+                    <line class="boot-spoke" x1="60" y1="76" x2="60" y2="90" stroke-width="1"/>
+                    <line class="boot-spoke" x1="30" y1="60" x2="47" y2="60" stroke-width="1"/>
+                    <line class="boot-spoke" x1="73" y1="60" x2="90" y2="60" stroke-width="1"/>
+                    <circle class="boot-core" cx="60" cy="60" r="5"/>
+                </svg>
+            </div>
+            <div class="boot-text-sequence" id="boot-text-sequence"></div>
+            <div class="boot-progress-wrap">
+                <div class="boot-progress-bar">
+                    <div class="boot-progress-fill" id="boot-progress-fill"></div>
+                </div>
+                <span class="boot-percentage" id="boot-percentage">0%</span>
+            </div>
+            <div class="boot-final" id="boot-final">RMaDSD // SYSTEM ONLINE</div>
+        </div>
+    </div>
+
+    <!-- Scan-line overlay -->
+    <div class="scanline-overlay"></div>
+
+    <!-- Particle canvas background -->
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <div class="nav-left">
+            <!-- Back Button: hidden on default section, shown inside nav when on other sections -->
+            <button class="back-btn hidden" id="back-btn" aria-label="Return to Mission Briefing">
+                ◄ RETURN TO BASE
+            </button>
+            <div class="nav-logo">
+                <span class="logo-bracket">[</span>
+                <span class="logo-text">RMaDSD</span>
+                <span class="logo-bracket">]</span>
+            </div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#mission-briefing" class="nav-link active" data-section="mission-briefing">MISSION BRIEFING</a></li>
+            <li><a href="#arsenal"          class="nav-link"        data-section="arsenal">ARSENAL &amp; RESOURCES</a></li>
+            <li><a href="#field-operations" class="nav-link"        data-section="field-operations">FIELD OPERATIONS</a></li>
+            <li><a href="#mission-debrief"  class="nav-link"        data-section="mission-debrief">MISSION DEBRIEF</a></li>
+            <li><a href="#garrison-records" class="nav-link"        data-section="garrison-records">GARRISON RECORDS</a></li>
+        </ul>
+        <div class="nav-right">
+            <div class="nav-status">
+                <span class="status-indicator online"></span>
+                <span class="status-text">UPLINK ACTIVE</span>
+            </div>
+            <!-- Hamburger: visible on mobile only -->
+            <button class="hamburger-btn" id="hamburger-btn" aria-label="Open navigation menu">☰</button>
+        </div>
+    </nav>
+
+    <!-- Mobile Nav Overlay (dim background) -->
+    <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
+
+    <!-- Mobile Slide-In Nav Panel -->
+    <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile navigation">
+        <div class="mobile-nav-header">
+            <span class="mobile-nav-logo">[ RMaDSD ]</span>
+            <button class="mobile-nav-close" id="mobile-nav-close" aria-label="Close navigation">✕</button>
+        </div>
+        <ul class="mobile-nav-links">
+            <li><a href="#mission-briefing" class="mobile-nav-link" data-section="mission-briefing">MISSION BRIEFING</a></li>
+            <li><a href="#arsenal"          class="mobile-nav-link" data-section="arsenal">ARSENAL &amp; RESOURCES</a></li>
+            <li><a href="#field-operations" class="mobile-nav-link" data-section="field-operations">FIELD OPERATIONS</a></li>
+            <li><a href="#mission-debrief"  class="mobile-nav-link" data-section="mission-debrief">MISSION DEBRIEF</a></li>
+            <li><a href="#garrison-records" class="mobile-nav-link" data-section="garrison-records">GARRISON RECORDS</a></li>
+        </ul>
+    </nav>
+
+    <!-- Terminal Loading Overlay -->
+    <div class="terminal-overlay" id="terminal-overlay" aria-hidden="true">
+        <div class="terminal-window">
+            <div class="terminal-win-header">
+                <div class="terminal-win-dots">
+                    <span></span><span></span><span></span>
+                </div>
+                <span class="terminal-win-title">// SECURE CHANNEL</span>
+            </div>
+            <div class="terminal-body" id="terminal-body"></div>
+        </div>
+    </div>
+
+    <!-- ======================================================
+         SECTION PAGES
+         Each section is hidden by default; navigation.js
+         adds the .active class to show the current section.
+         ====================================================== -->
+    <main class="sections-container">
+
+        <!-- ══════════════════════════════════════════
+             SECTION 1: MISSION BRIEFING (Default)
+             ══════════════════════════════════════════ -->
+        <section class="section-page" id="section-mission-briefing">
+            <div class="section-header">
+                <div class="section-title-bar">
+                    <span class="section-icon">◆</span>
+                    <h1 class="section-title">MISSION BRIEFING</h1>
+                    <span class="section-status">// ACTIVE</span>
+                </div>
+                <!-- EDIT: Update the subtitle below -->
+                <div class="section-subtitle">Project Overview &amp; Objectives</div>
+            </div>
+
+            <div class="section-body">
+
+                <!-- Hero -->
+                <div class="mission-hero">
+                    <!-- EDIT: Replace the title text with your project name -->
+                    <h2 class="mission-hero-title glitch-text" data-text="RMaDSD INTERFACE">Soapomorph</h2>
+                    <!-- EDIT: Replace the paragraph below with your project overview -->
+                    <p class="mission-hero-text">The Soapomorph is an interactive, horror-themed soap dispensing system designed specifically for use in immersive horror theme park environments.</p>
+                    <p class="mission-hero-text">The primary goal of the Soapomorph is to blend functionality with entertainment, reinforcing the theme park's narrative even in transitional spaces such as bathrooms.</p>
+                    <p class="mission-hero-text">The Soapomorph is intended to be safe, durable, easy to maintain, and disassemble. Please note, this is only a prototype.</p>
+                </div>
+
+                <!-- Featured Media Placeholder -->
+                <!-- EDIT: Replace this div with <img src="your-image.jpg" alt="Project"> or a video embed -->
+                <div class="featured-media media-placeholder">
+                    <img src="img-phases/MissionBriefing-MainImage.png" class="media-image" alt="Soapomorph Project Overview" />
+                </div>
+
+                <!-- Mission Objectives -->
+                <div class="section-block">
+                    <div class="block-header">
+                        <span class="block-icon">◆</span>
+                        <h3 class="block-title">MISSION OBJECTIVES</h3>
+                    </div>
+                    <!-- EDIT: Replace these list items with your actual project goals -->
+                    <ul class="hud-list">
+                        <li class="hud-list-item"><span class="hud-bullet">▶</span>Objective 1 — Reflective Narrative of Product development</li>
+                        <li class="hud-list-item"><span class="hud-bullet">▶</span>Objective 2 — Critical Appraisal of the Techniques Explored</li>
+                        <li class="hud-list-item"><span class="hud-bullet">▶</span>Objective 3 — Appropriate Presentation and inclusion of Designs and Artefacts</li>
+                        <li class="hud-list-item"><span class="hud-bullet">▶</span>Objective 4 — Create a Physical Artifact</li>
+                    </ul>
+                </div>
+
+                <!-- Mission Parameters Info Grid -->
+                <div class="section-block">
+                    <div class="block-header">
+                        <span class="block-icon">◆</span>
+                        <h3 class="block-title">MISSION PARAMETERS</h3>
+                    </div>
+                    <!-- EDIT: Update each value cell with your project details -->
+                    <div class="info-grid">
+                        <div class="info-cell">
+                            <span class="info-label">PROJECT DATE</span>
+                            <span class="info-value">2026</span>
+                        </div>
+                        <div class="info-cell">
+                            <span class="info-label">TEAM</span>
+                            <span class="info-value">Alien</span>
+                        </div>
+                        <div class="info-cell">
+                            <span class="info-label">STATUS</span>
+                            <span class="info-value info-online">ACTIVE</span>
+                        </div>
+                        <div class="info-cell">
+                            <span class="info-label">CLASSIFICATION</span>
+                            <span class="info-value">SOAPOMORPH</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /section-body -->
+        </section><!-- /section-mission-briefing -->
+
+
+        <!-- ══════════════════════════════════════════
+             SECTION 2: ARSENAL & RESOURCES
+             ══════════════════════════════════════════ -->
+        <section class="section-page" id="section-arsenal">
+            <div class="section-header">
+                <div class="section-title-bar">
+                    <span class="section-icon">◆</span>
+                    <h1 class="section-title">ARSENAL &amp; RESOURCES</h1>
+                    <span class="section-status">// ACTIVE</span>
+                </div>
+                <!-- EDIT: Update the subtitle below -->
+                <div class="section-subtitle">Materials, Tools &amp; Components Deployed</div>
+            </div>
+
+            <div class="section-body">
+
+                <div class="arsenal-section" id="arsenal-active">
+                    <h2 class="arsenal-section-title">ACTIVE ASSETS</h2>
+
+                    <div class="arsenal-phase" id="arsenal-active-phase-01" data-phase="01" data-status="active">
+                        <h3 class="arsenal-phase-title">PHASE 01</h3>
+                        <div class="arsenal-grid">
+                            <div class="arsenal-card used" data-phase="01" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">✍</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Hand Sketching &amp; Conceptual Design</h3>
+                                    <p class="card-desc">Used for design concepts before committing to CAD. Effective because it's fast and allows quick iterations but lacks precision and 3D visualizations.</p>
+                                    <span class="card-tag">PROCESS</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="01" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">📸</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Reference Image Analysis</h3>
+                                    <p class="card-desc">Used to establish a direction and inform design proportions. Effective because it provides proven design inspirations. Limitations: risk of over-copying.</p>
+                                    <span class="card-tag">RESOURCE</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="01" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">🎨</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Paint Software Annotations</h3>
+                                    <p class="card-desc">Used to digitally annotate reference images. Effective because annotations are saved and easily shareable, but has low precision for dimensional design.</p>
+                                    <span class="card-tag">SOFTWARE</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="01" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">💬</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Brainstorming &amp; Discussion Sessions</h3>
+                                    <p class="card-desc">Used to evaluate multiple project concepts. Good for team debates but can be time consuming and require strong facilitation.</p>
+                                    <span class="card-tag">PROCESS</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="01" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">💨</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Pneumatic Pump Research &amp; Concept</h3>
+                                    <p class="card-desc">Pneumatics offer powerful and controlled actuation but are complex in use and require compressed air storage for operation.</p>
+                                    <span class="card-tag">COMPONENT</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="01" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">📊</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Gantt Chart &amp; MOSCOW Matrix</h3>
+                                    <p class="card-desc">Used to plan project timeline and prioritize features. Effective to visualize planning but need to be revised often as project progresses.</p>
+                                    <span class="card-tag">PLANNING</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="01" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">🔬</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Material Selection Discussion</h3>
+                                    <p class="card-desc">Discussed PLA, ABS, foam and silicone for different components. Each material offers distinct properties for specific use cases.</p>
+                                    <span class="card-tag">MATERIAL</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="phase-nav-btn" data-nav-type="to-field" data-phase="01">← RETURN TO PHASE 01</button>
+                    </div>
+
+                    <div class="arsenal-phase" id="arsenal-active-phase-02" data-phase="02" data-status="active">
+                        <h3 class="arsenal-phase-title">PHASE 02</h3>
+                        <div class="arsenal-grid">
+                            <div class="arsenal-card used" data-phase="02" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">🔍</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">3D Scanning</h3>
+                                    <p class="card-desc">Used to capture skull geometry as design reference. Effective because scanning is faster than manual modelling but scan quality depends on hardware.</p>
+                                    <span class="card-tag">HARDWARE</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="02" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">🖥️</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Blender CAD Modelling</h3>
+                                    <p class="card-desc">Used to create detailed 3D models of skull structure. Enables precise dimension control and flexibility between artistic and mechanical designs.</p>
+                                    <span class="card-tag">SOFTWARE</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="02" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">☁️</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Fusion 360</h3>
+                                    <p class="card-desc">Cloud-based CAD used for the mechanism design. Strong mechanical design capabilities with free educational tier. Provided good balance of power and usability.</p>
+                                    <span class="card-tag">SOFTWARE</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="02" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">🧲</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Magnetic Housing Design</h3>
+                                    <p class="card-desc">Designed for detachable top using magnets. Effective because magnets provide secure yet removable assembly, but magnetic strength must be calculated.</p>
+                                    <span class="card-tag">COMPONENT</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="02" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">🖨️</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Prototype Tongue 3D Printing</h3>
+                                    <p class="card-desc">Printed sample Xenomorph tongue to validate scale and fastening approach. This reveals fit and scale issues early in design.</p>
+                                    <span class="card-tag">PROCESS</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="02" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">🔧</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Internal Tube &amp; Bracket Design</h3>
+                                    <p class="card-desc">Designed throat-like tendril structure for soap tube routing and mechanical support. Integrated design reduces components but is difficult to print.</p>
+                                    <span class="card-tag">COMPONENT</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="02" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">⚙️</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Jaw Mechanism Exploration</h3>
+                                    <p class="card-desc">Evaluated gear system vs jaw-tongue integration. Without physical prototypes, selection was based on theory rather than experience.</p>
+                                    <span class="card-tag">DESIGN</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="02" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">📐</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Technical Drawing &amp; Documentation</h3>
+                                    <p class="card-desc">Created 2D projections and assembly diagrams. Drawings communicate precise dimensions but can misrepresent 3D complexity.</p>
+                                    <span class="card-tag">DOCUMENTATION</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="02" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">♻️</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Design Iteration &amp; Refinement</h3>
+                                    <p class="card-desc">Multiple iterations of skull design incorporating feedback. Improves quality but is time-consuming and requires version control.</p>
+                                    <span class="card-tag">PROCESS</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="phase-nav-btn" data-nav-type="to-field" data-phase="02">← RETURN TO PHASE 02</button>
+                    </div>
+
+                    <div class="arsenal-phase" id="arsenal-active-phase-03" data-phase="03" data-status="active">
+                        <h3 class="arsenal-phase-title">PHASE 03</h3>
+                        <div class="arsenal-grid">
+                            <div class="arsenal-card used" data-phase="03" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">🖥️</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Blender CAD Modelling</h3>
+                                    <p class="card-desc">Mechanism design finalized jaw opening mechanism and piston-style tongue extension. Digital simulation doesn't account for real-world friction.</p>
+                                    <span class="card-tag">SOFTWARE</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="03" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">🔗</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Design-to-Base Compatibility</h3>
+                                    <p class="card-desc">Modified skull design to integrate with wooden prototype base. Early physical prototype reveals interface issues early.</p>
+                                    <span class="card-tag">DESIGN</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="03" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">🪵</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Wooden Base Prototype</h3>
+                                    <p class="card-desc">Built scrap wood prototype with hinge-mounted soap door. Validates base dimensions but doesn't represent final manufacturing design.</p>
+                                    <span class="card-tag">PROTOTYPE</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="03" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">💾</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">STL File Export</h3>
+                                    <p class="card-desc">Prepared final CAD models for 3D printing by converting to STL format. Universal format but export can introduce geometry errors.</p>
+                                    <span class="card-tag">PROCESS</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="03" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">🏗️</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Support Structure &amp; Orientation Planning</h3>
+                                    <p class="card-desc">Planned print orientation and support placement. Good planning reduces waste but plans often need adjustment during actual printing.</p>
+                                    <span class="card-tag">PLANNING</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="03" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">🎬</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Mechanism Animation in Blender</h3>
+                                    <p class="card-desc">Created animation showing jaw opening and closing with tongue piston movement. Verifies mechanism function before manufacturing.</p>
+                                    <span class="card-tag">VISUALIZATION</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="03" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">🧩</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Design Segmentation Strategy</h3>
+                                    <p class="card-desc">Began planning division of full assembly into smaller printable segments with connector holes. Enables modular assembly.</p>
+                                    <span class="card-tag">STRATEGY</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="phase-nav-btn" data-nav-type="to-field" data-phase="03">← RETURN TO PHASE 03</button>
+                    </div>
+
+                    <div class="arsenal-phase" id="arsenal-active-phase-04" data-phase="04" data-status="active">
+                        <h3 class="arsenal-phase-title">PHASE 04</h3>
+                        <div class="arsenal-grid">
+                            <div class="arsenal-card used" data-phase="04" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">🖨️</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">3D Printing (PP Attempt)</h3>
+                                    <p class="card-desc">Attempted to print full assembly using polypropylene filament. Print failed approximately 30% through due to filament degradation from storage.</p>
+                                    <span class="card-tag">PROCESS</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="04" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">🔬</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Polypropylene (PP) Filament</h3>
+                                    <p class="card-desc">Material selected for initial print for chemical resistance properties. Older stored filament becomes brittle causing print failure.</p>
+                                    <span class="card-tag">MATERIAL</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="04" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">💰</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Budget &amp; Approval Process</h3>
+                                    <p class="card-desc">Requested printing budgets from University. Approval delays meant second attempt was denied before deadline approached.</p>
+                                    <span class="card-tag">ADMIN</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="04" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">🧩</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Design Segmentation &amp; Modular Assembly</h3>
+                                    <p class="card-desc">Redesigned full assembly into smaller printable segments with alignment holes similar to Lego blocks. Enables reliable mechanical connection.</p>
+                                    <span class="card-tag">DESIGN</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="04" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">⚙️</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Jaw Mechanism Finalization</h3>
+                                    <p class="card-desc">Completed detailed design of jaw-as-piston mechanism during printing phase. Limited time for testing but verified through animation.</p>
+                                    <span class="card-tag">DESIGN</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="04" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">👥</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">3D Printing Team Consultation</h3>
+                                    <p class="card-desc">Consulted with university 3D printing staff on feasibility of full-assembly printing. Expert feedback reveals manufacturing constraints early.</p>
+                                    <span class="card-tag">CONSULTATION</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="04" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">🎬</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Animation &amp; Mechanical Visualization</h3>
+                                    <p class="card-desc">Created animation demonstrating jaw opening and closing driving the tongue forward as a piston. Communicates mechanism to stakeholders.</p>
+                                    <span class="card-tag">VISUALIZATION</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card used" data-phase="04" data-status="active">
+                                <div class="card-status-badge status-active">● ACTIVE</div>
+                                <div class="card-icon-placeholder">♻️</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">PLA Filament Transition</h3>
+                                    <p class="card-desc">Switched to PLA filament after PP failure. PLA is easier to print and cheaper, but lacks chemical resistance properties of PP.</p>
+                                    <span class="card-tag">MATERIAL</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="phase-nav-btn" data-nav-type="to-field" data-phase="04">← RETURN TO PHASE 04</button>
+                    </div>
+                </div>
+
+                <div class="arsenal-section" id="arsenal-unutilised">
+                    <h2 class="arsenal-section-title">UNUTILISED ASSETS</h2>
+
+                    <div class="arsenal-phase" id="arsenal-unutilised-phase-01" data-phase="01" data-status="unutilised">
+                        <h3 class="arsenal-phase-title">PHASE 01</h3>
+                        <div class="arsenal-grid">
+                            <div class="arsenal-card unutilised" data-phase="01" data-status="unutilised">
+                                <div class="card-status-badge status-inactive">● UNUTILISED</div>
+                                <div class="card-icon-placeholder">🧱</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">3D Scale Model Prototyping</h3>
+                                    <p class="card-desc">Could have hand-built early physical models from foam or cardboard. Models help visualization but sketches plus digital models were sufficient.</p>
+                                    <span class="card-tag">PROTOTYPE</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card unutilised" data-phase="01" data-status="unutilised">
+                                <div class="card-status-badge status-inactive">● UNUTILISED</div>
+                                <div class="card-icon-placeholder">✋</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Haptic Pen / 3D Sculpting Software</h3>
+                                    <p class="card-desc">Could have used haptic feedback for organic shape sculpting. Haptic tools excel at freeform geometry but learning curve would delay CAD work.</p>
+                                    <span class="card-tag">SOFTWARE</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card unutilised" data-phase="01" data-status="unutilised">
+                                <div class="card-status-badge status-inactive">● UNUTILISED</div>
+                                <div class="card-icon-placeholder">⚡</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Linear Actuator Mechanism</h3>
+                                    <p class="card-desc">Proposed for tongue extension with separate gear jaw mechanism. Powerful controllable motion but cost was prohibitive for required specifications.</p>
+                                    <span class="card-tag">COMPONENT</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card unutilised" data-phase="01" data-status="unutilised">
+                                <div class="card-status-badge status-inactive">● UNUTILISED</div>
+                                <div class="card-icon-placeholder">💨</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Full Hydraulic/Pneumatic System</h3>
+                                    <p class="card-desc">Could have designed complete pneumatic system with compressor and cylinders. Adds complexity, noise concerns, and difficult storage.</p>
+                                    <span class="card-tag">SYSTEM</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card unutilised" data-phase="01" data-status="unutilised">
+                                <div class="card-status-badge status-inactive">● UNUTILISED</div>
+                                <div class="card-icon-placeholder">🧪</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Peristaltic Pump Deep Testing</h3>
+                                    <p class="card-desc">Could have extensively tested pump performance. Testing validates flow rates and pressure but time constraints deferred this testing.</p>
+                                    <span class="card-tag">TESTING</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="phase-nav-btn" data-nav-type="to-field" data-phase="01">← RETURN TO PHASE 01</button>
+                    </div>
+
+                    <div class="arsenal-phase" id="arsenal-unutilised-phase-02" data-phase="02" data-status="unutilised">
+                        <h3 class="arsenal-phase-title">PHASE 02</h3>
+                        <div class="arsenal-grid">
+                            <div class="arsenal-card unutilised" data-phase="02" data-status="unutilised">
+                                <div class="card-status-badge status-inactive">● UNUTILISED</div>
+                                <div class="card-icon-placeholder">🖥️</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">SolidWorks</h3>
+                                    <p class="card-desc">Professional mechanical CAD with parametric modeling. Parametric design efficient for revisions but subscription cost and steep learning curve.</p>
+                                    <span class="card-tag">SOFTWARE</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card unutilised" data-phase="02" data-status="unutilised">
+                                <div class="card-status-badge status-inactive">● UNUTILISED</div>
+                                <div class="card-icon-placeholder">🔧</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">FreeCAD</h3>
+                                    <p class="card-desc">Open-source CAD alternative with parametric abilities. Free software but smaller community and less polished interface than Blender.</p>
+                                    <span class="card-tag">SOFTWARE</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card unutilised" data-phase="02" data-status="unutilised">
+                                <div class="card-status-badge status-inactive">● UNUTILISED</div>
+                                <div class="card-icon-placeholder">🔬</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Physics Simulation Software</h3>
+                                    <p class="card-desc">Could have used robotics simulation to validate mechanism dynamics. Reveals issues early but mechanism was simple enough for animation.</p>
+                                    <span class="card-tag">SOFTWARE</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card unutilised" data-phase="02" data-status="unutilised">
+                                <div class="card-status-badge status-inactive">● UNUTILISED</div>
+                                <div class="card-icon-placeholder">🛠️</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">CAM Software</h3>
+                                    <p class="card-desc">Could have used CAM to generate toolpaths for CNC. Automates path generation for precision but not required for 3D printing.</p>
+                                    <span class="card-tag">SOFTWARE</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="phase-nav-btn" data-nav-type="to-field" data-phase="02">← RETURN TO PHASE 02</button>
+                    </div>
+
+                    <div class="arsenal-phase" id="arsenal-unutilised-phase-03" data-phase="03" data-status="unutilised">
+                        <h3 class="arsenal-phase-title">PHASE 03</h3>
+                        <div class="arsenal-grid">
+                            <div class="arsenal-card unutilised" data-phase="03" data-status="unutilised">
+                                <div class="card-status-badge status-inactive">● UNUTILISED</div>
+                                <div class="card-icon-placeholder">📊</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">FEA - Finite Element Analysis</h3>
+                                    <p class="card-desc">Mathematical stress analysis to validate strengths and predict failure modes. Physical prototype testing was adequate.</p>
+                                    <span class="card-tag">ANALYSIS</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card unutilised" data-phase="03" data-status="unutilised">
+                                <div class="card-status-badge status-inactive">● UNUTILISED</div>
+                                <div class="card-icon-placeholder">🎨</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Resin Casting &amp; Silicone Molding</h3>
+                                    <p class="card-desc">Could have created molds to replicate complex geometry for improved finish. Mold creation is expensive and time-consuming.</p>
+                                    <span class="card-tag">PROCESS</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card unutilised" data-phase="03" data-status="unutilised">
+                                <div class="card-status-badge status-inactive">● UNUTILISED</div>
+                                <div class="card-icon-placeholder">🔗</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Composite Manufacturing</h3>
+                                    <p class="card-desc">Could have used carbon fiber for high-strength lightweight components. Unnecessary for stationary soap dispensers.</p>
+                                    <span class="card-tag">MATERIAL</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card unutilised" data-phase="03" data-status="unutilised">
+                                <div class="card-status-badge status-inactive">● UNUTILISED</div>
+                                <div class="card-icon-placeholder">📐</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Tolerance Stack-Up Analysis</h3>
+                                    <p class="card-desc">Mathematical analysis of accumulated tolerances across assembled parts. Prototype tolerances were sufficient for validation.</p>
+                                    <span class="card-tag">ANALYSIS</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card unutilised" data-phase="03" data-status="unutilised">
+                                <div class="card-status-badge status-inactive">● UNUTILISED</div>
+                                <div class="card-icon-placeholder">🌡️</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Thermal Analysis</h3>
+                                    <p class="card-desc">Could have analyzed heat generation in electronics compartment under bathroom conditions. Not critical for prototype phase.</p>
+                                    <span class="card-tag">ANALYSIS</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="phase-nav-btn" data-nav-type="to-field" data-phase="03">← RETURN TO PHASE 03</button>
+                    </div>
+
+                    <div class="arsenal-phase" id="arsenal-unutilised-phase-04" data-phase="04" data-status="unutilised">
+                        <h3 class="arsenal-phase-title">PHASE 04</h3>
+                        <div class="arsenal-grid">
+                            <div class="arsenal-card unutilised" data-phase="04" data-status="unutilised">
+                                <div class="card-status-badge status-inactive">● UNUTILISED</div>
+                                <div class="card-icon-placeholder">🔬</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">ABS Filament Instead of PP</h3>
+                                    <p class="card-desc">Could have used ABS for better durability and more reliable printing. Stronger but PP was selected for chemical resistance.</p>
+                                    <span class="card-tag">MATERIAL</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card unutilised" data-phase="04" data-status="unutilised">
+                                <div class="card-status-badge status-inactive">● UNUTILISED</div>
+                                <div class="card-icon-placeholder">🔬</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">PETG Filament</h3>
+                                    <p class="card-desc">Could have used PETG as compromise between strength and printability. Combines ABS strength with easier printing but more expensive.</p>
+                                    <span class="card-tag">MATERIAL</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card unutilised" data-phase="04" data-status="unutilised">
+                                <div class="card-status-badge status-inactive">● UNUTILISED</div>
+                                <div class="card-icon-placeholder">🏭</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Injection Molding</h3>
+                                    <p class="card-desc">Could have injection-molded single piece housing for superior strength. Mold creation cost only justified at 100+ unit quantities.</p>
+                                    <span class="card-tag">PROCESS</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card unutilised" data-phase="04" data-status="unutilised">
+                                <div class="card-status-badge status-inactive">● UNUTILISED</div>
+                                <div class="card-icon-placeholder">🧱</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Hand Fabrication &amp; Composite Layup</h3>
+                                    <p class="card-desc">Could have hand-built structure from foam, resin, and fiberglass. Flexible for unique forms but time-consuming.</p>
+                                    <span class="card-tag">PROCESS</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card unutilised" data-phase="04" data-status="unutilised">
+                                <div class="card-status-badge status-inactive">● UNUTILISED</div>
+                                <div class="card-icon-placeholder">✨</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Vacuum Casting</h3>
+                                    <p class="card-desc">Could have used vacuum casting for 10-20 units with better finish. Mold creation adds time not needed for one prototype.</p>
+                                    <span class="card-tag">PROCESS</span>
+                                </div>
+                            </div>
+                            <div class="arsenal-card unutilised" data-phase="04" data-status="unutilised">
+                                <div class="card-status-badge status-inactive">● UNUTILISED</div>
+                                <div class="card-icon-placeholder">⚙️</div>
+                                <div class="card-content">
+                                    <h3 class="card-title">Metal 3D Printing</h3>
+                                    <p class="card-desc">Could have used laser sintering for stainless steel or titanium. Cost prohibitive ($500k+ equipment) and not accessible to students.</p>
+                                    <span class="card-tag">PROCESS</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="phase-nav-btn" data-nav-type="to-field" data-phase="04">← RETURN TO PHASE 04</button>
+                    </div>
+                </div>
+
+            </div><!-- /section-body -->
+        </section><!-- /section-arsenal -->
+
+
+        <!-- ══════════════════════════════════════════
+             SECTION 3: FIELD OPERATIONS
+             ══════════════════════════════════════════ -->
+        <section class="section-page" id="section-field-operations">
+            <div class="section-header">
+                <div class="section-title-bar">
+                    <span class="section-icon">◆</span>
+                    <h1 class="section-title">FIELD OPERATIONS</h1>
+                    <span class="section-status">// ACTIVE</span>
+                </div>
+                <!-- EDIT: Update the subtitle below -->
+                <div class="section-subtitle">Build Process &amp; Mission Log</div>
+            </div>
+
+            <div class="section-body">
+
+                <!-- EDIT: Add, remove or edit timeline entries below -->
+                <div class="ops-timeline">
+
+                    <!-- Entry 1 -->
+                    <div class="ops-entry" id="field-phase-01" data-phase="01">
+                        <div class="ops-timestamp">
+                            <!-- EDIT: Replace with actual date/phase -->
+                            <span class="ops-date">PHASE 01</span>
+                            <span class="ops-time">19/01/2026 - 18/02/2026</span>
+                        </div>
+                        <div class="ops-connector">
+                            <div class="ops-node"></div>
+                            <div class="ops-line"></div>
+                        </div>
+                        <div class="ops-content">
+                            <!-- EDIT: Replace title and description -->
+                            <h3 class="ops-title">Initial Design</h3>
+                            <p class="ops-desc">This was the first phase of the project. The group had been established prior in December but the initial steps of proposals and designs had started at this date. The projects we had in mind were: Windmill, Drone, Octopus, Butterfly, Jurassic Park Dinosaur, and Xenomorph. After a discussion we decided to proceed with project Soapomorph - a Soap dispenser using a Xenomorph and Warhammer Skeletons as a base, designed for use in theme parks.</p>
+                            <p class="ops-desc">The discussions of the first ways of creating a model came up. Discussed were foam sheets, Periastalic pumps, a track motion for the inner head, and starting designs were created via paint and reference pictures. The group decided on a stand alone base rather than key holes, as there were concerns about soap damaging the electronics which would be saved in the head and hence moved to a base below the head.</p>
+                            <p class="ops-desc">An early design of a track was also decided, with mechanical joint of gears selected at this stage. For developing designs, initial thoughts were to use 3D scanning, haptic pen and Blender to create this project. Early iterations of a Gantt chart and Moscow matrix were made. Two main design approaches were brought forward: a gear system to open the jaw with a track for the tongue extension, or using the jaw and skull as a base and connecting the tongue so it automatically extends when the jaw opens. A linear actuator option was quickly dismissed due to cost constraints.</p>
+                            <p class="ops-desc">Stakeholders began to be identified, materials were selected, a risk assessment was created, and the Test Plan was assigned to new members that joined the team.</p>
+                            <!-- EDIT: Replace this div with <img src="your-image.jpg" alt="Phase 1"> -->
+                            <div class="ops-media">
+                                <img src="img-phases/Phase01-1.png" alt="Phase 01 - Initial Design 1" class="phase-image" />
+                                <img src="img-phases/Phase01-2.png" alt="Phase 01 - Initial Design 2" class="phase-image" />
+                                <img src="img-phases/Phase01-3.png" alt="Phase 01 - Initial Design 3" class="phase-image" />
+                                <img src="img-phases/Phase01-4.png" alt="Phase 01 - Initial Design 4" class="phase-image" />
+                            </div>
+                            <div class="phase-nav-group">
+                                <button class="phase-nav-btn phase-nav-btn-inline" data-nav-type="to-arsenal" data-status="active" data-phase="01">ACTIVE TOOLS - PHASE 01</button>
+                                <button class="phase-nav-btn phase-nav-btn-inline" data-nav-type="to-arsenal" data-status="unutilised" data-phase="01">UNUTILISED TOOLS - PHASE 01</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Entry 2 -->
+                    <div class="ops-entry" id="field-phase-02" data-phase="02">
+                        <div class="ops-timestamp">
+                            <span class="ops-date">PHASE 02</span>
+                            <span class="ops-time">17/03/2026 - 14/04/2026</span>
+                        </div>
+                        <div class="ops-connector">
+                            <div class="ops-node"></div>
+                            <div class="ops-line"></div>
+                        </div>
+                        <div class="ops-content">
+                            <h3 class="ops-title">3D Modelling &amp; Digital Prototyping</h3>
+                            <p class="ops-desc">At the start of this phase, an early design of the skull had been created. New iterations of how the design would support given assembly and disposability were described at this stage too. As the skull needed headspace, the group decided that the top of the skull should be detachable for access to electronics and tubes for cleaning and maintenance purposes. The design team also printed off a Xenomorph tongue to show the scale and how the tongue would be fastened to the skull.</p>
+                            <p class="ops-desc">After a few discussions and iterations, a final design of the skull was brought forward. The design supports the idea of a headspace which will be held together by magnets. However, there was no mechanism designed at this stage yet. The only thing produced and showable was the skull and some documents. Hence began the design of the mechanism, the lid and the jaw.</p>
+                            <p class="ops-desc">Due to time constraints and the ambitiousness of the project, the next iterations of the skull would be needed to take forward. The possibility of doing small refinements and changes would still be there but nothing major about the skull wouldn't be able to be changed. In addition to this, due to the spring holidays coming up, some facilities and team members would not be reachable during this period.</p>
+                            <div class="ops-media">
+                                <img src="img-phases/Phase02-1.jpg" alt="Phase 02 - 3D Modelling 1" class="phase-image" />
+                                <img src="img-phases/Phase02-2.png" alt="Phase 02 - 3D Modelling 2" class="phase-image" />
+                                <img src="img-phases/Phase02-3.png" alt="Phase 02 - 3D Modelling 3" class="phase-image" />
+                                <img src="img-phases/Phase02-4.png" alt="Phase 02 - 3D Modelling 4" class="phase-image" />
+                                <img src="img-phases/Phase02-5.png" alt="Phase 02 - 3D Modelling 5" class="phase-image" />
+                                <img src="img-phases/Phase02-6.png" alt="Phase 02 - 3D Modelling 6" class="phase-image" />
+                                <img src="img-phases/Phase02-7.png" alt="Phase 02 - 3D Modelling 7" class="phase-image" />
+                                <img src="img-phases/Phase02-8.png" alt="Phase 02 - 3D Modelling 8" class="phase-image" />
+                            </div>
+                            <div class="phase-nav-group">
+                                <button class="phase-nav-btn phase-nav-btn-inline" data-nav-type="to-arsenal" data-status="active" data-phase="02">ACTIVE TOOLS - PHASE 02</button>
+                                <button class="phase-nav-btn phase-nav-btn-inline" data-nav-type="to-arsenal" data-status="unutilised" data-phase="02">UNUTILISED TOOLS - PHASE 02</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Entry 3 -->
+                    <div class="ops-entry" id="field-phase-03" data-phase="03">
+                        <div class="ops-timestamp">
+                            <span class="ops-date">PHASE 03</span>
+                            <span class="ops-time">21/04/2026 - 29/04/2026</span>
+                        </div>
+                        <div class="ops-connector">
+                            <div class="ops-node"></div>
+                            <div class="ops-line"></div>
+                        </div>
+                        <div class="ops-content">
+                            <h3 class="ops-title">Final 3D Design Refinement</h3>
+                            <p class="ops-desc">The group finished the final 3D design that is going to be printed. The problem at this stage was that the mechanism wasn't finished yet. The plan was to print this iteration of the skull and then figure out how to implement the mechanical joint from there. The prototype of the base had been brought and built with scrap wood, with a hinge door for refilling soap. The design of the base is as discussed in Phase 2 with some minor changes.</p>
+                            <p class="ops-desc">The Final 3D Design then also received multiple iterations to be compatible with the base. The group added a theme-appropriate, tendril-like throat which connected to a bracket. This bracket has a hole in it, and the tendrils also support the tubing from the soap to the head.</p>
+                            <div class="ops-media">
+                                <img src="img-phases/Phase03-1.jpg" alt="Phase 03 - Final Design 1" class="phase-image" />
+                                <img src="img-phases/Phase03-2.jpg" alt="Phase 03 - Final Design 2" class="phase-image" />
+                                <img src="img-phases/Phase03-3.png" alt="Phase 03 - Final Design 3" class="phase-image" />
+                                <img src="img-phases/Phase03-4.png" alt="Phase 03 - Final Design 4" class="phase-image" />
+                                <img src="img-phases/Phase03-5.png" alt="Phase 03 - Final Design 5" class="phase-image" />
+                                <img src="img-phases/Phase03-6.png" alt="Phase 03 - Final Design 6" class="phase-image" />
+                                <img src="img-phases/Phase03-7.png" alt="Phase 03 - Final Design 7" class="phase-image" />
+                            </div>
+                            <div class="phase-nav-group">
+                                <button class="phase-nav-btn phase-nav-btn-inline" data-nav-type="to-arsenal" data-status="active" data-phase="03">ACTIVE TOOLS - PHASE 03</button>
+                                <button class="phase-nav-btn phase-nav-btn-inline" data-nav-type="to-arsenal" data-status="unutilised" data-phase="03">UNUTILISED TOOLS - PHASE 03</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Entry 4 -->
+                    <div class="ops-entry" id="field-phase-04" data-phase="04">
+                        <div class="ops-timestamp">
+                            <span class="ops-date">PHASE 04</span>
+                            <span class="ops-time">30/04/2026 - 14/05/2026</span>
+                        </div>
+                        <div class="ops-connector">
+                            <div class="ops-node"></div>
+                            <!-- No line after last entry -->
+                        </div>
+                        <div class="ops-content">
+                            <h3 class="ops-title">Manufacturing Attempt</h3>
+                            <p class="ops-desc">The first attempt to get the artefact printing ended in failure. Roughly 30% through the print, issues with the PP filament came up. These were related to the age of the PP as it was in storage for an unknown prolonged time. The exact issues are not known to the group. The group then attempted to get a second print approved for budgeting however this ended in failure too. As a last resort, the group booked another printing with their own finances, but even with printing in PLA, due to the late submission of the print, the artefact would not get ready before the deadline.</p>
+                            <p class="ops-desc">The 3D printing team informed the group that the current way of printing the entire artefact would not work properly. The group needed to slice the 3D model into smaller parts and find a way to connect those. The solution was to use simple small holes which align with the other parts just like Lego.</p>
+                            <p class="ops-desc">At this stage, the group finalized the tongue mechanical joint. The idea is that when the jaw opens, it drives the tongue forward like a piston. The same is true for when the jaw closes. This hinders the tongue from getting stuck between the jaw and skull.</p>
+                            <div class="ops-media">
+                                <img src="img-phases/Phase04-1.gif" alt="Phase 04 - Manufacturing Animation" class="phase-image" />
+                                <img src="img-phases/Phase04-2.png" alt="Phase 04 - Manufacturing 2" class="phase-image" />
+                                <img src="img-phases/Phase04-3.png" alt="Phase 04 - Manufacturing 3" class="phase-image" />
+                                <img src="img-phases/Phase04-4.png" alt="Phase 04 - Manufacturing 4" class="phase-image" />
+                                <img src="img-phases/Phase04-5.png" alt="Phase 04 - Manufacturing 5" class="phase-image" />
+                                <img src="img-phases/Phase04-6.png" alt="Phase 04 - Manufacturing 6" class="phase-image" />
+                                <img src="img-phases/Phase04-7.png" alt="Phase 04 - Manufacturing 7" class="phase-image" />
+                                <img src="img-phases/Phase04-8.png" alt="Phase 04 - Manufacturing 8" class="phase-image" />
+                            </div>
+                            <div class="phase-nav-group">
+                                <button class="phase-nav-btn phase-nav-btn-inline" data-nav-type="to-arsenal" data-status="active" data-phase="04">ACTIVE TOOLS - PHASE 04</button>
+                                <button class="phase-nav-btn phase-nav-btn-inline" data-nav-type="to-arsenal" data-status="unutilised" data-phase="04">UNUTILISED TOOLS - PHASE 04</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- /ops-timeline -->
+
+            </div><!-- /section-body -->
+        </section><!-- /section-field-operations -->
+
+
+        <!-- ══════════════════════════════════════════
+             SECTION 4: MISSION DEBRIEF
+             ══════════════════════════════════════════ -->
+        <section class="section-page" id="section-mission-debrief">
+            <div class="section-header">
+                <div class="section-title-bar">
+                    <span class="section-icon">◆</span>
+                    <h1 class="section-title">MISSION DEBRIEF</h1>
+                    <span class="section-status">// ACTIVE</span>
+                </div>
+                <!-- EDIT: Update the subtitle below -->
+                <div class="section-subtitle">Final Result &amp; Project Showcase</div>
+            </div>
+
+            <div class="section-body">
+
+                <!-- Hero Showcase -->
+                <div class="section-block">
+                    <div class="block-header">
+                        <span class="block-icon">◆</span>
+                        <h3 class="block-title">FINAL RESULT</h3>
+                    </div>
+                    <!-- EDIT: Replace this placeholder with your main showcase image/video -->
+                    <div class="media-placeholder debrief-hero-media">
+                        <script src="https://embed.github.com/view/3d/Balraj-Bhuller/Balraj-Bhuller.github.io/main/stl/skullBase28_03_2026.stl"></script>
+                    </div>
+                </div>
+
+                <!-- Gallery Grid -->
+                <div class="section-block">
+                    <div class="block-header">
+                        <span class="block-icon">◆</span>
+                        <h3 class="block-title">GALLERY</h3>
+                    </div>
+                    <!-- EDIT: Replace each placeholder with your gallery images -->
+                    <div class="gallery-grid">
+                        <div class="media-placeholder gallery-item">
+                            <span class="media-placeholder-text">[ IMAGE ]</span>
+                        </div>
+                        <div class="media-placeholder gallery-item">
+                            <span class="media-placeholder-text">[ IMAGE ]</span>
+                        </div>
+                        <div class="media-placeholder gallery-item">
+                            <span class="media-placeholder-text">[ IMAGE ]</span>
+                        </div>
+                        <div class="media-placeholder gallery-item">
+                            <span class="media-placeholder-text">[ IMAGE ]</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Final Notes -->
+                <div class="section-block">
+                    <div class="block-header">
+                        <span class="block-icon">◆</span>
+                        <h3 class="block-title">FINAL NOTES</h3>
+                    </div>
+                    <!-- EDIT: Replace this text with your conclusions, reflections, or next steps -->
+                    <div class="final-notes">
+                        <p><strong>Project Summary:</strong> This project shows the iterative nature of prototype development and the importance of adaptability in design. The transition from the initial design to a servo-driven piston mechanism showcased how practical constraints and team collaboration refine ideas into solutions. The shift from a wall-mounted to a standalone design was driven by electronic protection concerns, illustrating how real-world requirements directly influence engineering decisions.</p>
+
+                        <p><strong>Manufacturing Lessons:</strong> The manufacturing phase revealed lessons about design for manufacturability. The PP filament failure highlighted the importance of material storage and handling, which is an often overlooked detail but essential to success. Due to time constraints, PLA was used to attempt to speed up the printing process in an attempt to get a physical artefact before deadlines. The subsequent reading into modular segmentation transformed potential project failures into a valuable learning experience about optimizing designs for 3D printing capabilities.</p>
+
+                        <p><strong>What Worked Well:</strong> Hand sketching effectively pre-explored the design space before committing to CAD, preventing false starts. The magnetic housing concept proved elegant and provides maintenance access without fasteners. Building a wooden base prototype early showed integration issues before the full 3D design had been modelled. Blender's flexibility allowed transitions between artistic and mechanical designs. Team communication through annotated sketches kept all members aligned despite project complexity.</p>
+
+                        <p><strong>What Could Be Improved:</strong> More testing of materials could have prevented PP filament degradation issues. Physical prototype testing of the jaw mechanism, even a cardboard mockup, would have validated the piston concept before depending entirely on animations. Design should have started from the mechanism first, then built the skull around it, improving efficiency and providing scale earlier.</p>
+
+                        <p><strong>If We Started Again:</strong> We would start the artefact from the mechanism first, rather than designing the skull aesthetics and fitting mechanics afterwards. Building a working jaw mechanism prototype early, testing the servo range, force requirements, and position dynamics physically, would have provided a foundation for all design.</p>
+
+                        <p><strong>Key Learnings:</strong> Design for manufacturability is as critical as design for function. Mechanism design should be foremost in design, and digital simulation must be validated against physical reality.</p>
+                    </div>
+                </div>
+
+            </div><!-- /section-body -->
+        </section><!-- /section-mission-debrief -->
+
+
+        <!-- ══════════════════════════════════════════
+             SECTION 5: GARRISON RECORDS
+             ══════════════════════════════════════════ -->
+        <section class="section-page" id="section-garrison-records">
+            <div class="section-header">
+                <div class="section-title-bar">
+                    <span class="section-icon">◆</span>
+                    <h1 class="section-title">GARRISON RECORDS</h1>
+                    <span class="section-status">// INDEXED</span>
+                </div>
+                <div class="section-subtitle">Centralized Reference &amp; Attribution Repository</div>
+            </div>
+
+            <div class="section-body">
+
+                <div class="section-block">
+                    <div class="block-header">
+                        <span class="block-icon">◆</span>
+                        <h3 class="block-title">REFERENCES</h3>
+                    </div>
+                    <ul class="hud-list">
+                        <li class="hud-list-item"><span class="hud-bullet">▶</span><strong>Source Title Placeholder</strong> — Author Name, Publication / Platform, 2026. <a href="https://example.com/reference1">Link</a></li>
+                        <li class="hud-list-item"><span class="hud-bullet">▶</span><strong>Research Article Placeholder</strong> — Author Name, Journal / Site, 2026. <a href="https://example.com/reference2">Link</a></li>
+                        <li class="hud-list-item"><span class="hud-bullet">▶</span><strong>Technical Documentation Placeholder</strong> — Organization / Maintainer, Updated 2026. <a href="https://example.com/reference3">Link</a></li>
+                        <li class="hud-list-item"><span class="hud-bullet">▶</span><strong>Book / Manual Placeholder</strong> — Author Name, Publisher, 2026. <a href="https://example.com/reference4">Link</a></li>
+                    </ul>
+                </div>
+
+                <div class="section-block">
+                    <div class="block-header">
+                        <span class="block-icon">◆</span>
+                        <h3 class="block-title">IMAGE SOURCES</h3>
+                    </div>
+                    <ul class="hud-list">
+                        <li class="hud-list-item"><span class="hud-bullet">▶</span><strong>img-phases/MissionBriefing-MainImage.png</strong> — Source Attribution Placeholder, Creator / Archive Name, Accessed 2026</li>
+                        <li class="hud-list-item"><span class="hud-bullet">▶</span><strong>img-phases/Phase01-*.png</strong> — Source Attribution Placeholder, Creator / Archive Name, Accessed 2026</li>
+                        <li class="hud-list-item"><span class="hud-bullet">▶</span><strong>img-phases/Phase02-*.jpg/png</strong> — Source Attribution Placeholder, Creator / Archive Name, Accessed 2026</li>
+                        <li class="hud-list-item"><span class="hud-bullet">▶</span><strong>img-phases/Phase03-*.jpg/png</strong> — Source Attribution Placeholder, Creator / Archive Name, Accessed 2026</li>
+                        <li class="hud-list-item"><span class="hud-bullet">▶</span><strong>img-phases/Phase04-*.png/gif</strong> — Source Attribution Placeholder, Creator / Archive Name, Accessed 2026</li>
+                    </ul>
+                </div>
+
+            </div><!-- /section-body -->
+        </section><!-- /section-garrison-records -->
+
+    </main>
+
+    <!-- Bottom Stats Bar -->
+    <footer class="bottom-bar">
+        <div class="bottom-stat">
+            <span class="bottom-label">UPLINK</span>
+            <span class="bottom-value counter" data-target="98.7" data-suffix="%">0%</span>
+        </div>
+        <div class="bottom-stat">
+            <span class="bottom-label">NODES</span>
+            <span class="bottom-value counter" data-target="2847">0</span>
+        </div>
+        <div class="bottom-stat">
+            <span class="bottom-label">LATENCY</span>
+            <span class="bottom-value counter" data-target="12" data-suffix="ms">0ms</span>
+        </div>
+        <div class="bottom-stat">
+            <span class="bottom-label">BANDWIDTH</span>
+            <span class="bottom-value counter" data-target="847" data-suffix=" TB/s">0 TB/s</span>
+        </div>
+        <div class="bottom-stat">
+            <span class="bottom-label">ENCRYPTION</span>
+            <span class="bottom-value">AES-512</span>
+        </div>
+        <div class="bottom-stat">
+            <span class="bottom-label">SESSION</span>
+            <span class="bottom-value" id="session-time">00:00:00</span>
+        </div>
+    </footer>
+
+    <script src="js/loading.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/navigation.js"></script>
+</body>
+</html>
